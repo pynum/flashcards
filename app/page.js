@@ -51,7 +51,7 @@ function FlashcardApp() {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4-0613",
+          model: "openai/gpt-4o-mini",
           messages: [
             { role: "system", content: "You are a helpful assistant that creates flashcards." },
             { role: "user", content: `Create 10 flashcards about ${prompt}. Format each flashcard as a JSON object with 'question' and 'answer' fields.` }
