@@ -1,14 +1,16 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress } from '@mui/material';
-import { styled } from '@mui/system';
-import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
+import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery } from '@mui/material';
+import { styled, useTheme } from '@mui/system';
+import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 
 const FlashCard = styled(Card)(({ theme }) => ({
-  width: '300px',
+  width: '100%',
+  maxWidth: '300px',
   height: '200px',
   perspective: '1000px',
   cursor: 'pointer',
@@ -33,11 +35,34 @@ const CardFace = styled(CardContent)(({ theme, isBack }) => ({
   transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
 }));
 
+function LoadingScreen() {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        backgroundColor: 'background.default',
+      }}
+    >
+      <CircularProgress size={60} thickness={4} />
+      <Typography variant="h5" sx={{ mt: 2 }}>
+        Loading AI Flashcards...
+      </Typography>
+    </Box>
+  );
+}
+
 function FlashcardApp() {
   const [prompt, setPrompt] = useState('');
   const [flashcards, setFlashcards] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { isLoaded, isSignedIn, user } = useUser();
+  const clerk = useClerk();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const generateFlashcards = async () => {
     if (!prompt.trim()) return;
@@ -76,89 +101,102 @@ function FlashcardApp() {
   };
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return <LoadingScreen />;
   }
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      bgcolor: 'background.default',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      py: 4,
-      px: 2,
-    }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ color: 'primary.main' }}>
-        AI Flashcards
-      </Typography>
-      
-      <SignedOut>
-        <Box sx={{ textAlign: 'center', my: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Please sign in to use AI Flashcards
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            AI Flashcards
           </Typography>
-          <SignInButton mode="modal">
-            <Button variant="contained" color="primary">
-              Sign In
+          {isSignedIn && (
+            <Button color="inherit" onClick={() => clerk.signOut()} startIcon={<LogoutIcon />}>
+              Sign Out
             </Button>
-          </SignInButton>
-        </Box>
-      </SignedOut>
+          )}
+        </Toolbar>
+      </AppBar>
+      
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        py: 4,
+        px: 2,
+      }}>
+        <SignedOut>
+          <Box sx={{ textAlign: 'center', my: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Please sign in to use AI Flashcards
+            </Typography>
+            <SignInButton mode="modal">
+              <Button variant="contained" color="primary">
+                Sign In
+              </Button>
+            </SignInButton>
+          </Box>
+        </SignedOut>
 
-      <SignedIn>
-        <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Enter a topic for flashcards"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={generateFlashcards}
-            disabled={isLoading}
-          >
-            {isLoading ? <CircularProgress size={24} /> : 'Generate Flashcards'}
-          </Button>
-        </Box>
-        <Box sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          justifyContent: 'center',
-        }}>
-          {flashcards.map((card, index) => (
-            <FlashCard key={index} sx={{ 
-              '& .front, & .back': { 
-                position: 'absolute',
-                backfaceVisibility: 'hidden',
-                transition: 'transform 0.6s',
-              },
-              '& .back': { 
-                transform: 'rotateY(180deg)',
-              },
-              '&:hover .front': { 
-                transform: 'rotateY(180deg)',
-              },
-              '&:hover .back': { 
-                transform: 'rotateY(0deg)',
-              },
-            }}>
-              <CardFace className="front">
-                <Typography variant="body1">{card.question}</Typography>
-              </CardFace>
-              <CardFace className="back" isBack>
-                <Typography variant="body1">{card.answer}</Typography>
-              </CardFace>
-            </FlashCard>
-          ))}
-        </Box>
-      </SignedIn>
+        <SignedIn>
+          <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Enter a topic for flashcards"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              onClick={generateFlashcards}
+              disabled={isLoading}
+            >
+              {isLoading ? <CircularProgress size={24} /> : 'Generate Flashcards'}
+            </Button>
+          </Box>
+          <Box sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            justifyContent: 'center',
+            width: '100%',
+          }}>
+            {flashcards.map((card, index) => (
+              <FlashCard key={index} sx={{ 
+                width: isMobile ? '100%' : '300px',
+                '& .front, & .back': { 
+                  position: 'absolute',
+                  backfaceVisibility: 'hidden',
+                  transition: 'transform 0.6s',
+                  width: '100%',
+                  height: '100%',
+                },
+                '& .back': { 
+                  transform: 'rotateY(180deg)',
+                },
+                '&:hover .front': { 
+                  transform: 'rotateY(180deg)',
+                },
+                '&:hover .back': { 
+                  transform: 'rotateY(0deg)',
+                },
+              }}>
+                <CardFace className="front">
+                  <Typography variant="body1">{card.question}</Typography>
+                </CardFace>
+                <CardFace className="back" isBack>
+                  <Typography variant="body1">{card.answer}</Typography>
+                </CardFace>
+              </FlashCard>
+            ))}
+          </Box>
+        </SignedIn>
+      </Box>
     </Box>
   );
 }
