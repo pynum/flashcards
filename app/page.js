@@ -1,21 +1,66 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper, ThemeProvider, createTheme } from '@mui/material';
+import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper, ThemeProvider, createTheme, Link, Container, Grid, IconButton } from '@mui/material';
 import { styled } from '@mui/system';
-import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk, UserButton} from '@clerk/nextjs';
+import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk, UserButton } from '@clerk/nextjs';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import SchoolIcon from '@mui/icons-material/School';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import CoffeeIcon from '@mui/icons-material/LocalCafe';
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+function Footer() {
+  return (
+    <Box
+      component="footer"
+      sx={{
+        py: 3,
+        px: 2,
+        mt: 'auto',
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'light'
+            ? theme.palette.grey[200]
+            : theme.palette.grey[800],
+      }}
+    >
+      <Container maxWidth="lg">
+        <Grid container spacing={2} justifyContent="space-between" alignItems="center">
+          <Grid item xs={12} sm={6}>
+            <Typography variant="body1">
+              © {new Date().getFullYear()} Tamzid Ullah. All rights reserved.
+            </Typography>
+            <Link href="https://tamzidullah.com" target="_blank" rel="noopener noreferrer" color="inherit" sx={{ textDecoration: 'none' }}>
+              tamzidullah.com
+            </Link>
+          </Grid>
+          <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton color="inherit" aria-label="GitHub" component="a" href="https://github.com/yourusername" target="_blank">
+              <GitHubIcon />
+            </IconButton>
+            <IconButton color="inherit" aria-label="LinkedIn" component="a" href="https://linkedin.com/in/yourusername" target="_blank">
+              <LinkedInIcon />
+            </IconButton>
+            <IconButton color="inherit" aria-label="Twitter" component="a" href="https://twitter.com/yourusername" target="_blank">
+              <TwitterIcon />
+            </IconButton>
+          </Grid>
+        </Grid>
+      </Container>
+    </Box>
+  );
+}
 
 function SupportDeveloper() {
   return (
     <Box sx={{ mt: 4, textAlign: 'center' }}>
       <Link 
-        href="https://donate.stripe.com/test_14kaF1cUg2Sz0SYcMM" 
+        href="https://donate.stripe.com/4gwcOCg7abFQatO3cc" 
         target="_blank" 
         rel="noopener noreferrer"
         sx={{ 
@@ -331,6 +376,7 @@ function FlashcardApp() {
         </SignedIn>
       </Box>
       <SupportDeveloper />
+      <Footer />
     </Box>
   );
 }
