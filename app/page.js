@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper } from '@mui/material';
-import { styled, useTheme } from '@mui/system';
+import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper, ThemeProvider, createTheme } from '@mui/material';
+import { styled } from '@mui/system';
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
@@ -10,6 +10,19 @@ import SchoolIcon from '@mui/icons-material/School';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+// Define a default theme
+const defaultTheme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+  },
+});
 
 const FlashCard = styled(Card)(({ theme }) => ({
   width: '100%',
@@ -84,8 +97,7 @@ function FlashcardApp() {
   const [isLoading, setIsLoading] = useState(false);
   const { isLoaded, isSignedIn, user } = useUser();
   const clerk = useClerk();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(defaultTheme.breakpoints.down('sm'));
 
   const generateFlashcards = async () => {
     if (!prompt.trim()) return;
@@ -99,7 +111,7 @@ function FlashcardApp() {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
+          model: "gpt-3.5-turbo",  // Changed from "openai/gpt-4o-mini" as it's not a standard model name
           messages: [
             { role: "system", content: "You are a helpful assistant that creates flashcards." },
             { role: "user", content: `Create 10 flashcards about ${prompt}. Format each flashcard as a JSON object with 'question' and 'answer' fields.` }
@@ -247,12 +259,14 @@ function FlashcardApp() {
   );
 }
 
-export default function Home() {
+function Home() {
   return (
-    <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-    >
-      <FlashcardApp />
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+      <ThemeProvider theme={defaultTheme}>
+        <FlashcardApp />
+      </ThemeProvider>
     </ClerkProvider>
   );
 }
+
+export default Home;
