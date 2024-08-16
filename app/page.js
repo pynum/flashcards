@@ -111,7 +111,7 @@ function FlashcardApp() {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",  // Changed from "openai/gpt-4o-mini" as it's not a standard model name
+          model: "gpt-3.5-turbo",
           messages: [
             { role: "system", content: "You are a helpful assistant that creates flashcards." },
             { role: "user", content: `Create 10 flashcards about ${prompt}. Format each flashcard as a JSON object with 'question' and 'answer' fields.` }
@@ -162,18 +162,70 @@ function FlashcardApp() {
         py: 4,
         px: 2,
       }}>
-        <SignedOut>
-          <Box sx={{ textAlign: 'center', my: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Please sign in to use AI Flashcards
-            </Typography>
-            <SignInButton mode="modal">
-              <Button variant="contained" color="primary">
-                Sign In
-              </Button>
-            </SignInButton>
-          </Box>
-        </SignedOut>
+<SignedOut>
+  <Box sx={{ 
+    textAlign: 'center', 
+    my: 4, 
+    p: 3, 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+    borderRadius: 2,
+    maxWidth: 600,
+    mx: 'auto'
+  }}>
+    <Typography variant="h4" gutterBottom color="primary">
+      Welcome to AI Flashcards 🚀
+    </Typography>
+    
+    <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Paper elevation={3} sx={{ p: 2, backgroundColor: 'primary.light' }}>
+        <Typography variant="h6" gutterBottom>
+          🧠 Boost Your Learning
+        </Typography>
+        <Typography>
+          AI Flashcards uses cutting-edge AI to create custom flashcards on any topic you choose!
+        </Typography>
+      </Paper>
+
+      <Paper elevation={3} sx={{ p: 2, backgroundColor: 'secondary.light' }}>
+        <Typography variant="h6" gutterBottom>
+          🔒 Secure & Personalized
+        </Typography>
+        <Typography>
+          Sign in to save your flashcards, track your progress, and access advanced features.
+        </Typography>
+      </Paper>
+
+      <Paper elevation={3} sx={{ p: 2, backgroundColor: 'success.light' }}>
+        <Typography variant="h6" gutterBottom>
+          🌟 Get Started in Seconds
+        </Typography>
+        <Typography>
+          Just sign in, enter a topic, and let AI create your perfect study materials!
+        </Typography>
+      </Paper>
+    </Box>
+
+    <SignInButton mode="modal">
+      <Button 
+        variant="contained" 
+        color="primary" 
+        size="large"
+        sx={{ 
+          fontSize: '1.2rem', 
+          py: 1.5, 
+          px: 4,
+          boxShadow: 3,
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: 5,
+          },
+        }}
+      >
+        Sign In to Start Learning 📚
+      </Button>
+    </SignInButton>
+  </Box>
+</SignedOut>
 
         <SignedIn>
           <InstructionSection
