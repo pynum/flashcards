@@ -3,13 +3,37 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper, ThemeProvider, createTheme } from '@mui/material';
 import { styled } from '@mui/system';
-import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs';
+import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk, UserButton} from '@clerk/nextjs';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import SchoolIcon from '@mui/icons-material/School';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+function SupportDeveloper() {
+  return (
+    <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Link 
+        href="https://www.buymeacoffee.com/yourusername" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        sx={{ 
+          display: 'inline-flex', 
+          alignItems: 'center',
+          color: 'text.secondary',
+          textDecoration: 'none',
+          '&:hover': { color: 'primary.main' }
+        }}
+      >
+        <CoffeeIcon sx={{ mr: 1 }} />
+        <Typography variant="body2">
+          Buy the developer a coffee
+        </Typography>
+      </Link>
+    </Box>
+  );
+}
 
 // Define a default theme
 const defaultTheme = createTheme({
@@ -111,7 +135,7 @@ function FlashcardApp() {
           'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
+          model: "gpt-4o-mini",
           messages: [
             { role: "system", content: "You are a helpful assistant that creates flashcards." },
             { role: "user", content: `Create 10 flashcards about ${prompt}. Format each flashcard as a JSON object with 'question' and 'answer' fields.` }
@@ -129,7 +153,7 @@ function FlashcardApp() {
       setFlashcards(generatedFlashcards);
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      alert('Failed to generate custom flashcards. Using default set instead.');
+      //alert('Failed to generate custom flashcards. Using default set instead.');
       setFlashcards(defaultFlashcards);
     } finally {
       setIsLoading(false);
@@ -141,91 +165,90 @@ function FlashcardApp() {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             AI Flashcards 🧠
           </Typography>
-          {isSignedIn && (
-            <Button color="inherit" onClick={() => clerk.signOut()} startIcon={<LogoutIcon />}>
-              Sign Out
-            </Button>
-          )}
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </Toolbar>
       </AppBar>
       
       <Box sx={{
+        flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         py: 4,
         px: 2,
       }}>
-<SignedOut>
-  <Box sx={{ 
-    textAlign: 'center', 
-    my: 4, 
-    p: 3, 
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-    borderRadius: 2,
-    maxWidth: 600,
-    mx: 'auto'
-  }}>
-    <Typography variant="h4" gutterBottom color="primary">
-      Welcome to AI Flashcards 🚀
-    </Typography>
-    
-    <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Paper elevation={3} sx={{ p: 2, backgroundColor: 'primary.light' }}>
-        <Typography variant="h6" gutterBottom>
-          🧠 Boost Your Learning
-        </Typography>
-        <Typography>
-          AI Flashcards uses cutting-edge AI to create custom flashcards on any topic you choose!
-        </Typography>
-      </Paper>
+        <SignedOut>
+          <Box sx={{ 
+            textAlign: 'center', 
+            my: 4, 
+            p: 3, 
+            backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+            borderRadius: 2,
+            maxWidth: 600,
+            mx: 'auto'
+          }}>
+            <Typography variant="h4" gutterBottom color="primary">
+              Welcome to AI Flashcards 🚀
+            </Typography>
+            
+            <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Paper elevation={3} sx={{ p: 2, backgroundColor: 'primary.light' }}>
+                <Typography variant="h6" gutterBottom>
+                  🧠 Boost Your Learning
+                </Typography>
+                <Typography>
+                  AI Flashcards uses cutting-edge AI to create custom flashcards on any topic you choose!
+                </Typography>
+              </Paper>
 
-      <Paper elevation={3} sx={{ p: 2, backgroundColor: 'secondary.light' }}>
-        <Typography variant="h6" gutterBottom>
-          🔒 Secure & Personalized
-        </Typography>
-        <Typography>
-          Sign in to save your flashcards, track your progress, and access advanced features.
-        </Typography>
-      </Paper>
+              <Paper elevation={3} sx={{ p: 2, backgroundColor: 'secondary.light' }}>
+                <Typography variant="h6" gutterBottom>
+                  🔒 Secure & Personalized
+                </Typography>
+                <Typography>
+                  Sign in to save your flashcards, track your progress, and access advanced features.
+                </Typography>
+              </Paper>
 
-      <Paper elevation={3} sx={{ p: 2, backgroundColor: 'success.light' }}>
-        <Typography variant="h6" gutterBottom>
-          🌟 Get Started in Seconds
-        </Typography>
-        <Typography>
-          Just sign in, enter a topic, and let AI create your perfect study materials!
-        </Typography>
-      </Paper>
-    </Box>
+              <Paper elevation={3} sx={{ p: 2, backgroundColor: 'success.light' }}>
+                <Typography variant="h6" gutterBottom>
+                  🌟 Get Started in Seconds
+                </Typography>
+                <Typography>
+                  Just sign in, enter a topic, and let AI create your perfect study materials!
+                </Typography>
+              </Paper>
+            </Box>
 
-    <SignInButton mode="modal">
-      <Button 
-        variant="contained" 
-        color="primary" 
-        size="large"
-        sx={{ 
-          fontSize: '1.2rem', 
-          py: 1.5, 
-          px: 4,
-          boxShadow: 3,
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: 5,
-          },
-        }}
-      >
-        Sign In to Start Learning 📚
-      </Button>
-    </SignInButton>
-  </Box>
-</SignedOut>
+            <SignInButton mode="modal">
+              <Button 
+                variant="contained" 
+                color="primary" 
+                size="large"
+                sx={{ 
+                  fontSize: '1.2rem', 
+                  py: 1.5, 
+                  px: 4,
+                  boxShadow: 3,
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: 5,
+                  },
+                }}
+              >
+                Sign In to Start Learning 📚
+              </Button>
+            </SignInButton>
+          </Box>
+        </SignedOut>
 
         <SignedIn>
           <InstructionSection
@@ -307,6 +330,7 @@ function FlashcardApp() {
           </Box>
         </SignedIn>
       </Box>
+      <SupportDeveloper />
     </Box>
   );
 }
