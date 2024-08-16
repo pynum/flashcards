@@ -23,10 +23,8 @@ function Footer() {
         py: 3,
         px: 2,
         mt: 'auto',
-        backgroundColor: (theme) =>
-          theme.palette.mode === 'light'
-            ? theme.palette.grey[200]
-            : theme.palette.grey[800],
+        backgroundColor: '#1c2331', // Dark blue background
+        color: '#ffffff', // White text for better contrast
       }}
     >
       <Container maxWidth="lg">
@@ -40,14 +38,11 @@ function Footer() {
             </Link>
           </Grid>
           <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <IconButton color="inherit" aria-label="GitHub" component="a" href="https://github.com/yourusername" target="_blank">
+            <IconButton color="inherit" aria-label="GitHub" component="a" href="https://github.com/tamzid2001" target="_blank">
               <GitHubIcon />
             </IconButton>
-            <IconButton color="inherit" aria-label="LinkedIn" component="a" href="https://linkedin.com/in/yourusername" target="_blank">
+            <IconButton color="inherit" aria-label="LinkedIn" component="a" href="hhttps://www.linkedin.com/in/tamzid-ullah-8a50a2234/" target="_blank">
               <LinkedInIcon />
-            </IconButton>
-            <IconButton color="inherit" aria-label="Twitter" component="a" href="https://twitter.com/yourusername" target="_blank">
-              <TwitterIcon />
             </IconButton>
           </Grid>
         </Grid>
