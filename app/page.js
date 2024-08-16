@@ -15,7 +15,7 @@ function SupportDeveloper() {
   return (
     <Box sx={{ mt: 4, textAlign: 'center' }}>
       <Link 
-        href="https://www.buymeacoffee.com/yourusername" 
+        href="https://donate.stripe.com/test_14kaF1cUg2Sz0SYcMM" 
         target="_blank" 
         rel="noopener noreferrer"
         sx={{ 
