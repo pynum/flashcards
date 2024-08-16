@@ -1,10 +1,13 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery } from '@mui/material';
+import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper } from '@mui/material';
 import { styled, useTheme } from '@mui/system';
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs';
 import LogoutIcon from '@mui/icons-material/Logout';
+import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
+import SchoolIcon from '@mui/icons-material/School';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 
 const API_URL = 'https://api.openai.com/v1/chat/completions';
 
@@ -35,6 +38,14 @@ const CardFace = styled(CardContent)(({ theme, isBack }) => ({
   transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
 }));
 
+const defaultFlashcards = [
+  { question: "What is the capital of France?", answer: "Paris" },
+  { question: "Who wrote 'Romeo and Juliet'?", answer: "William Shakespeare" },
+  { question: "What's the chemical symbol for gold?", answer: "Au" },
+  { question: "In what year did World War II end?", answer: "1945" },
+  { question: "What's the largest planet in our solar system?", answer: "Jupiter" }
+];
+
 function LoadingScreen() {
   return (
     <Box
@@ -52,6 +63,18 @@ function LoadingScreen() {
         Loading AI Flashcards...
       </Typography>
     </Box>
+  );
+}
+
+function InstructionSection({ icon, title, content }) {
+  return (
+    <Paper elevation={3} sx={{ p: 3, mb: 3, maxWidth: 600, width: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        {icon}
+        <Typography variant="h6" sx={{ ml: 2 }}>{title}</Typography>
+      </Box>
+      <Typography variant="body1">{content}</Typography>
+    </Paper>
   );
 }
 
@@ -94,7 +117,8 @@ function FlashcardApp() {
       setFlashcards(generatedFlashcards);
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      alert('Failed to generate flashcards. Please try again.');
+      alert('Failed to generate custom flashcards. Using default set instead.');
+      setFlashcards(defaultFlashcards);
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +133,7 @@ function FlashcardApp() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            AI Flashcards
+            AI Flashcards 🧠
           </Typography>
           {isSignedIn && (
             <Button color="inherit" onClick={() => clerk.signOut()} startIcon={<LogoutIcon />}>
@@ -140,6 +164,28 @@ function FlashcardApp() {
         </SignedOut>
 
         <SignedIn>
+          <InstructionSection
+            icon={<EmojiObjectsIcon fontSize="large" color="primary" />}
+            title="Welcome to AI Flashcards! 👋"
+            content="Boost your learning with AI-generated flashcards on any topic. Just enter a subject, and we'll create custom flashcards for you!"
+          />
+          
+          <InstructionSection
+            icon={<SchoolIcon fontSize="large" color="secondary" />}
+            title="How to Use 📚"
+            content="1. Enter a topic in the text field below.
+                     2. Click 'Generate Flashcards' to create your set.
+                     3. Hover over or tap the cards to reveal answers."
+          />
+          
+          <InstructionSection
+            icon={<PsychologyIcon fontSize="large" color="error" />}
+            title="Study Tips 🎓"
+            content="• Review cards regularly for better retention.
+                     • Try explaining answers in your own words.
+                     • Use these cards as a starting point for deeper learning."
+          />
+
           <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
             <TextField
               fullWidth
@@ -179,10 +225,10 @@ function FlashcardApp() {
                 '& .back': { 
                   transform: 'rotateY(180deg)',
                 },
-                '&:hover .front': { 
+                '&:hover .front, &:active .front': { 
                   transform: 'rotateY(180deg)',
                 },
-                '&:hover .back': { 
+                '&:hover .back, &:active .back': { 
                   transform: 'rotateY(0deg)',
                 },
               }}>
