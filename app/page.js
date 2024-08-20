@@ -1,389 +1,309 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Card, CardContent, CircularProgress, AppBar, Toolbar, useMediaQuery, Paper, ThemeProvider, createTheme, Link, Container, Grid, IconButton } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+  Box, Button, TextField, Typography, Card, CircularProgress,
+  AppBar, Toolbar, Paper, ThemeProvider, createTheme,
+  Snackbar, Alert
+} from '@mui/material';
 import { styled } from '@mui/system';
-import { ClerkProvider, SignInButton, SignedIn, SignedOut, useUser, useClerk, UserButton } from '@clerk/nextjs';
-import LogoutIcon from '@mui/icons-material/Logout';
-import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
-import SchoolIcon from '@mui/icons-material/School';
-import PsychologyIcon from '@mui/icons-material/Psychology';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import CoffeeIcon from '@mui/icons-material/LocalCafe';
+import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, UserButton } from '@clerk/nextjs';
+import WavesIcon from '@mui/icons-material/Waves';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
+import SupportIcon from '@mui/icons-material/Support';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
+import 'firebase/compat/auth';
+import SubscriptionTab from '../components/SubscriptionTab'; // Import SubscriptionTab
 
-const API_URL = 'https://api.openai.com/v1/chat/completions';
+// Firebase config
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+};
 
-function Footer() {
-  return (
-    <Box
-      component="footer"
-      sx={{
-        py: 3,
-        px: 2,
-        mt: 'auto',
-        backgroundColor: '#1c2331', // Dark blue background
-        color: '#ffffff', // White text for better contrast
-      }}
-    >
-      <Container maxWidth="lg">
-        <Grid container spacing={2} justifyContent="space-between" alignItems="center">
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body1">
-              © {new Date().getFullYear()} Tamzid Ullah. All rights reserved.
-            </Typography>
-            <Link href="https://tamzidullah.com" target="_blank" rel="noopener noreferrer" color="inherit" sx={{ textDecoration: 'none' }}>
-              tamzidullah.com
-            </Link>
-          </Grid>
-          <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <IconButton color="inherit" aria-label="GitHub" component="a" href="https://github.com/tamzid2001" target="_blank">
-              <GitHubIcon />
-            </IconButton>
-            <IconButton color="inherit" aria-label="LinkedIn" component="a" href="hhttps://www.linkedin.com/in/tamzid-ullah-8a50a2234/" target="_blank">
-              <LinkedInIcon />
-            </IconButton>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
-  );
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
 }
 
-function SupportDeveloper() {
-  return (
-    <Box sx={{ mt: 4, textAlign: 'center' }}>
-      <Link 
-        href="https://donate.stripe.com/4gwcOCg7abFQatO3cc" 
-        target="_blank" 
-        rel="noopener noreferrer"
-        sx={{ 
-          display: 'inline-flex', 
-          alignItems: 'center',
-          color: 'text.secondary',
-          textDecoration: 'none',
-          '&:hover': { color: 'primary.main' }
-        }}
-      >
-        <CoffeeIcon sx={{ mr: 1 }} />
-        <Typography variant="body2">
-          Buy the developer a coffee
-        </Typography>
-      </Link>
-    </Box>
-  );
-}
+const firestore = firebase.firestore();
+const auth = firebase.auth();
+const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// Define a default theme
-const defaultTheme = createTheme({
+const modernTheme = createTheme({
   palette: {
-    mode: 'light',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
+    mode: 'dark',
+    primary: { main: '#90caf9' },
+    secondary: { main: '#f48fb1' },
+    background: { default: '#121212', paper: '#1e1e1e' },
+    text: { primary: '#ffffff', secondary: '#bdbdbd' }
+  }
 });
 
 const FlashCard = styled(Card)(({ theme }) => ({
-  width: '100%',
-  maxWidth: '300px',
+  width: '300px',
   height: '200px',
+  background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+  color: '#fff',
+  transition: 'transform 0.6s ease-out, box-shadow 0.3s ease, filter 0.3s ease',
   perspective: '1000px',
   cursor: 'pointer',
-  transition: 'transform 0.6s',
-  transformStyle: 'preserve-3d',
+  position: 'relative',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+  filter: 'brightness(1.1)',
   '&:hover': {
-    transform: 'scale(1.05)',
+    transform: 'scale(1.1) rotateY(5deg)',
+    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.5)',
+    filter: 'brightness(1.2)',
   },
 }));
 
-const CardFace = styled(CardContent)(({ theme, isBack }) => ({
+const FlashCardInner = styled(Box)(({ flipped }) => ({
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+  transformStyle: 'preserve-3d',
+  transition: 'transform 0.6s ease-out',
+}));
+
+const FlashCardSide = styled(Box)(({ theme }) => ({
   position: 'absolute',
   width: '100%',
   height: '100%',
   backfaceVisibility: 'hidden',
   display: 'flex',
-  alignItems: 'center',
   justifyContent: 'center',
-  padding: theme.spacing(2),
-  backgroundColor: isBack ? theme.palette.secondary.light : theme.palette.primary.light,
-  color: theme.palette.getContrastText(isBack ? theme.palette.secondary.light : theme.palette.primary.light),
-  transform: isBack ? 'rotateY(180deg)' : 'rotateY(0deg)',
+  alignItems: 'center',
+  textAlign: 'center',
+  color: '#fff',
+  fontSize: '18px',
+  padding: '10px',
+  borderRadius: '8px',
+  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
 }));
 
-const defaultFlashcards = [
-  { question: "What is the capital of France?", answer: "Paris" },
-  { question: "Who wrote 'Romeo and Juliet'?", answer: "William Shakespeare" },
-  { question: "What's the chemical symbol for gold?", answer: "Au" },
-  { question: "In what year did World War II end?", answer: "1945" },
-  { question: "What's the largest planet in our solar system?", answer: "Jupiter" }
-];
+const FrontSide = styled(FlashCardSide)({
+  background: '#42a5f5',
+  animation: 'fadeIn 1s ease-out',
+});
 
-function LoadingScreen() {
+const BackSide = styled(FlashCardSide)({
+  background: '#ef5350',
+  transform: 'rotateY(180deg)',
+  animation: 'fadeIn 1s ease-out',
+});
+
+function FlashCardComponent({ question, answer }) {
+  const [flipped, setFlipped] = useState(false);
+
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        backgroundColor: 'background.default',
-      }}
-    >
-      <CircularProgress size={60} thickness={4} />
-      <Typography variant="h5" sx={{ mt: 2 }}>
-        Loading AI Flashcards...
+    <FlashCard onClick={() => setFlipped(!flipped)}>
+      <FlashCardInner flipped={flipped}>
+        <FrontSide>
+          <Typography variant="h6">{question}</Typography>
+        </FrontSide>
+        <BackSide>
+          <Typography variant="h6">{answer}</Typography>
+        </BackSide>
+      </FlashCardInner>
+    </FlashCard>
+  );
+}
+
+const LandingPageBackground = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #1e1e1e, #121212)',
+  minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+  textAlign: 'center',
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    background: 'url(https://images.unsplash.com/photo-1483597011661-19e35b80dfe6?fit=crop&w=1920&h=1080) center/cover no-repeat',
+    opacity: 0.6,
+    zIndex: -1,
+  },
+}));
+
+function LandingPage({ onStart }) {
+  return (
+    <LandingPageBackground>
+      <Typography variant="h3" gutterBottom sx={{ color: '#fff', textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
+        Welcome to FlashStudy ✨
       </Typography>
-    </Box>
-  );
-}
-
-function InstructionSection({ icon, title, content }) {
-  return (
-    <Paper elevation={3} sx={{ p: 3, mb: 3, maxWidth: 600, width: '100%' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        {icon}
-        <Typography variant="h6" sx={{ ml: 2 }}>{title}</Typography>
+      <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', sm: 'row' }, mb: 4, maxWidth: '1200px', mx: 'auto' }}>
+        <Paper elevation={12} sx={{ p: 4, textAlign: 'center', width: { xs: '80%', sm: '300px' }, backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '12px' }}>
+          <EmojiEmotionsIcon fontSize="large" color="secondary" />
+          <Typography variant="h6" mt={2} sx={{ color: '#fff' }}>Create Flashcards Easily</Typography>
+          <Typography sx={{ color: '#fff' }}>Generate flashcards effortlessly for any topic.</Typography>
+        </Paper>
+        <Paper elevation={12} sx={{ p: 4, textAlign: 'center', width: { xs: '80%', sm: '300px' }, backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '12px' }}>
+          <WavesIcon fontSize="large" color="primary" />
+          <Typography variant="h6" mt={2} sx={{ color: '#fff' }}>Study Smarter</Typography>
+          <Typography sx={{ color: '#fff' }}>Review important questions and answers quickly.</Typography>
+        </Paper>
+        <Paper elevation={12} sx={{ p: 4, textAlign: 'center', width: { xs: '80%', sm: '300px' }, backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', borderRadius: '12px' }}>
+          <SupportIcon fontSize="large" color="action" />
+          <Typography variant="h6" mt={2} sx={{ color: '#fff' }}>Subscription Benefits</Typography>
+          <Typography sx={{ color: '#fff' }}>Unlock exclusive features with our subscription plan.</Typography>
+        </Paper>
       </Box>
-      <Typography variant="body1">{content}</Typography>
-    </Paper>
+      <Button onClick={onStart} variant="contained" color="primary" sx={{ mt: 4 }}>
+        Get Started
+      </Button>
+    </LandingPageBackground>
   );
 }
 
-function FlashcardApp() {
+function NewFlashcardApp() {
   const [prompt, setPrompt] = useState('');
   const [flashcards, setFlashcards] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { isLoaded, isSignedIn, user } = useUser();
-  const clerk = useClerk();
-  const isMobile = useMediaQuery(defaultTheme.breakpoints.down('sm'));
+  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [isSnackbarOpen, setIsSnackbarOpen] = useState(false);
+  const [userSubscription, setUserSubscription] = useState(false); // Mock subscription state
+  const [flashcardsCreated, setFlashcardsCreated] = useState(0); // Track number of flashcards created
 
   const generateFlashcards = async () => {
     if (!prompt.trim()) return;
-
+    
+    if (flashcardsCreated >= 3 && !userSubscription) {
+      setShowLandingPage(true);
+      return;
+    }
+    
     setIsLoading(true);
+
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
           messages: [
-            { role: "system", content: "You are a helpful assistant that creates flashcards." },
-            { role: "user", content: `Create 10 flashcards about ${prompt}. Format each flashcard as a JSON object with 'question' and 'answer' fields.` }
+            { role: "user", content: `Create 10 flashcards about ${prompt}. Format each flashcard as a JSON object with 'question' and 'answer' fields.` },
           ],
+          model: "llama3-8b-8192",
+          max_tokens: 500,
           temperature: 0.7,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate flashcards');
-      }
+      if (!response.ok) throw new Error('Failed to generate flashcards');
 
       const data = await response.json();
-      const generatedFlashcards = JSON.parse(data.choices[0].message.content);
+      const rawContent = data.choices[0]?.message?.content;
+      const start = rawContent.indexOf('[');
+      const end = rawContent.lastIndexOf(']') + 1;
+      const jsonString = rawContent.slice(start, end);
+      const generatedFlashcards = JSON.parse(jsonString);
+
       setFlashcards(generatedFlashcards);
+      setFlashcardsCreated(prev => prev + 1); // Increment flashcards count
+
     } catch (error) {
       console.error('Error generating flashcards:', error);
-      //alert('Failed to generate custom flashcards. Using default set instead.');
-      setFlashcards(defaultFlashcards);
+      setFlashcards([{ question: "What is the tallest mountain?", answer: "Mount Everest" }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!isLoaded) {
-    return <LoadingScreen />;
-  }
-
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            AI Flashcards 🧠
-          </Typography>
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>FlashStudy ✨</Typography>
+          <UserButton afterSignOutUrl="/" />
         </Toolbar>
       </AppBar>
-      
-      <Box sx={{
-        flexGrow: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        py: 4,
-        px: 2,
-      }}>
-        <SignedOut>
-          <Box sx={{ 
-            textAlign: 'center', 
-            my: 4, 
-            p: 3, 
-            backgroundColor: 'rgba(255, 255, 255, 0.1)', 
-            borderRadius: 2,
-            maxWidth: 600,
-            mx: 'auto'
-          }}>
-            <Typography variant="h4" gutterBottom color="primary">
-              Welcome to AI Flashcards 🚀
-            </Typography>
-            
-            <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, backgroundColor: 'primary.light' }}>
-                <Typography variant="h6" gutterBottom>
-                  🧠 Boost Your Learning
-                </Typography>
-                <Typography>
-                  AI Flashcards uses cutting-edge AI to create custom flashcards on any topic you choose!
-                </Typography>
-              </Paper>
 
-              <Paper elevation={3} sx={{ p: 2, backgroundColor: 'secondary.light' }}>
-                <Typography variant="h6" gutterBottom>
-                  🔒 Secure & Personalized
-                </Typography>
-                <Typography>
-                  Sign in to save your flashcards, track your progress, and access advanced features.
-                </Typography>
-              </Paper>
+      {showLandingPage ? (
+        <LandingPage onStart={() => setShowLandingPage(false)} />
+      ) : (
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5 }}>
+          {!userSubscription && flashcardsCreated >= 3 ? ( // Show subscription tab if not subscribed and limit reached
+            <SubscriptionTab />
+          ) : (
+            <>
+              <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
+                <TextField
+                  fullWidth
+                  variant="filled"
+                  label="Your Study Topic"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  sx={{ mb: 3 }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  onClick={generateFlashcards}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Generating Flashcards...' : 'Generate Flashcards'}
+                </Button>
+              </Box>
 
-              <Paper elevation={3} sx={{ p: 2, backgroundColor: 'success.light' }}>
-                <Typography variant="h6" gutterBottom>
-                  🌟 Get Started in Seconds
-                </Typography>
-                <Typography>
-                  Just sign in, enter a topic, and let AI create your perfect study materials!
-                </Typography>
-              </Paper>
-            </Box>
+              {isLoading && <CircularProgress />}
 
-            <SignInButton mode="modal">
-              <Button 
-                variant="contained" 
-                color="primary" 
-                size="large"
-                sx={{ 
-                  fontSize: '1.2rem', 
-                  py: 1.5, 
-                  px: 4,
-                  boxShadow: 3,
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: 5,
-                  },
-                }}
-              >
-                Sign In to Start Learning 📚
-              </Button>
-            </SignInButton>
-          </Box>
-        </SignedOut>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'center' }}>
+                {flashcards.map((card, index) => (
+                  <FlashCardComponent key={index} question={card.question} answer={card.answer} />
+                ))}
+              </Box>
+            </>
+          )}
+        </Box>
+      )}
 
-        <SignedIn>
-          <InstructionSection
-            icon={<EmojiObjectsIcon fontSize="large" color="primary" />}
-            title="Welcome to AI Flashcards! 👋"
-            content="Boost your learning with AI-generated flashcards on any topic. Just enter a subject, and we'll create custom flashcards for you!"
-          />
-          
-          <InstructionSection
-            icon={<SchoolIcon fontSize="large" color="secondary" />}
-            title="How to Use 📚"
-            content="1. Enter a topic in the text field below.
-                     2. Click 'Generate Flashcards' to create your set.
-                     3. Hover over or tap the cards to reveal answers."
-          />
-          
-          <InstructionSection
-            icon={<PsychologyIcon fontSize="large" color="error" />}
-            title="Study Tips 🎓"
-            content="• Review cards regularly for better retention.
-                     • Try explaining answers in your own words.
-                     • Use these cards as a starting point for deeper learning."
-          />
-
-          <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Enter a topic for flashcards"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              onClick={generateFlashcards}
-              disabled={isLoading}
-            >
-              {isLoading ? <CircularProgress size={24} /> : 'Generate Flashcards'}
-            </Button>
-          </Box>
-          <Box sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 2,
-            justifyContent: 'center',
-            width: '100%',
-          }}>
-            {flashcards.map((card, index) => (
-              <FlashCard key={index} sx={{ 
-                width: isMobile ? '100%' : '300px',
-                '& .front, & .back': { 
-                  position: 'absolute',
-                  backfaceVisibility: 'hidden',
-                  transition: 'transform 0.6s',
-                  width: '100%',
-                  height: '100%',
-                },
-                '& .back': { 
-                  transform: 'rotateY(180deg)',
-                },
-                '&:hover .front, &:active .front': { 
-                  transform: 'rotateY(180deg)',
-                },
-                '&:hover .back, &:active .back': { 
-                  transform: 'rotateY(0deg)',
-                },
-              }}>
-                <CardFace className="front">
-                  <Typography variant="body1">{card.question}</Typography>
-                </CardFace>
-                <CardFace className="back" isBack>
-                  <Typography variant="body1">{card.answer}</Typography>
-                </CardFace>
-              </FlashCard>
-            ))}
-          </Box>
-        </SignedIn>
-      </Box>
-      <SupportDeveloper />
-      <Footer />
+      <Snackbar open={isSnackbarOpen} autoHideDuration={4000} onClose={() => setIsSnackbarOpen(false)}>
+        <Alert onClose={() => setIsSnackbarOpen(false)} severity="success">Flashcards saved successfully!</Alert>
+      </Snackbar>
     </Box>
   );
 }
 
-function Home() {
+function SignInPage() {
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <ThemeProvider theme={defaultTheme}>
-        <FlashcardApp />
-      </ThemeProvider>
-    </ClerkProvider>
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <Typography variant="h4" align="center" mb={4}>Please sign in to access FlashStudy ✨</Typography>
+      <RedirectToSignIn />
+    </Box>
   );
 }
 
-export default Home;
+export default function App() {
+  return (
+    <ClerkProvider>
+      <SignedIn>
+        <ThemeProvider theme={modernTheme}>
+          <NewFlashcardApp />
+        </ThemeProvider>
+      </SignedIn>
+      <SignedOut>
+        <SignInPage />
+      </SignedOut>
+    </ClerkProvider>
+  );
+}
